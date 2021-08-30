@@ -59,9 +59,9 @@ def get_next_server():
 def start_server():
     """Open a new terminal window and start the server."""
     f = get_next_server()
-    cmd = (f"gnome-terminal"
-           f" --working-directory='{os.path.abspath(f)}'"
-           f" -- /bin/sh -c 'java {LAUNCH_ARGS}'")
+    cmd = (f"screen -S mc_server -dm bash -c"
+           f" \"cd '{os.path.abspath(f)}';"
+           f" java {LAUNCH_ARGS}\"")
     
     print()
     print("> " + cmd)
