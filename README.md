@@ -3,7 +3,7 @@ Tools for server archival and hosting archived servers
 
 ## Requirements
 
-* Python 3.6+ (tested on 3.9)
+* Python 3.9 (probably works for 3.7+)
 * Install pip and screen, if you don't already have them
   ```
   sudo apt-get install screen pip
@@ -23,6 +23,27 @@ Tools for server archival and hosting archived servers
 * Scripts should be run on the hosting server.
 
 ## Usage
+
+### Expected structure
+
+```
+NWSC 1/
+├─ logs/
+├─ eula.txt
+├─ server.properties
+├─ server.jar
+├─ …
+NWSC 2/
+├─ logs/
+├─ eula.txt
+├─ server.properties
+├─ server.jar
+├─ …
+NWSC n/
+├─ etc…
+set-gamerules.py
+start-tour.py
+```
 
 ### set-gamerules.py
 
