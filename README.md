@@ -4,7 +4,9 @@ Tools for server archival and hosting archived servers
 ## Requirements
 
 * Python 3.9 (probably works for 3.7+)
-* Install pip and screen, if you don't already have them
+
+* Install pip and screen, if you don't already have them.
+
   ```
   sudo apt-get install screen pip
   ```
@@ -14,7 +16,7 @@ Tools for server archival and hosting archived servers
   ```
 * Set the environment variables for the RCON password, port, and the server address.
   
-  Since this is designed to be run on the server, the address can be the private IPv4 address.
+  Since this is designed to be run on the server, the address can just be the private IPv4 address. `localhost` prolly works too.
   ```bash
   export MC_RCON_PASSWORD=password123
   export MC_RCON_PORT=1234
@@ -56,5 +58,15 @@ Simply run the file from the terminal using `python set-gamerules.py` and follow
 
 Used to cycle the maps each day. Make sure that each world folder name starts with "NWSC" and contains the server.jar
 file in the immediate folder.
+
+The map order is alphabetical based on the name of each server folder. Enumerating it like the 
+[example above](https://github.com/nwselfcheckout/archive-tools#expected-structure) will ensure that it is in the correct order.
+
+Adjust the [launch args](https://github.com/nwselfcheckout/archive-tools/blob/main/start-tour.py#L17-L19) in the script accordingly to accomodate the hosting computer.
+```py
+NO_GUI = True
+LAUNCH_ARGS = ("-Xms2G -Xmx16G -XX:+UseG1GC -jar server.jar"
+               f" {'nogui' if NO_GUI else ''}")
+```
 
 Simply run the file from the terminal using `python start-tour.py` and follow the on-screen prompts.
