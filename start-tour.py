@@ -73,7 +73,7 @@ def start_server():
 
 
 def send_command(cmd):
-    with MCRcon(HOST, RCON_PASSWORD, RCON_PORT) as mc:
+    with MCRcon(host=HOST, password= RCON_PASSWORD, port=RCON_PORT, timeout=10) as mc:
         print("[CONSOLE] " + mc.command(cmd))
 
 
