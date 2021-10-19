@@ -20,7 +20,7 @@ LAUNCH_ARGS = ("-Xms2G -Xmx16G -XX:+UseG1GC -jar server.jar"
 
 START_TIME = time.time()
 
-HOST = os.environ["MC_HOST_ADDRESS"]
+# HOST = os.environ["MC_HOST_ADDRESS"]
 RCON_PASSWORD = os.environ["MC_RCON_PASSWORD"]
 RCON_PORT = int(os.environ["MC_RCON_PORT"])
 
@@ -73,7 +73,7 @@ def start_server():
 
 
 def send_command(cmd):
-    with MCRcon(host=HOST, password= RCON_PASSWORD, port=RCON_PORT, timeout=10) as mc:
+    with MCRcon(host="localhost", password=RCON_PASSWORD, port=RCON_PORT, timeout=10) as mc:
         print("[CONSOLE] " + mc.command(cmd))
 
 
