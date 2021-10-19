@@ -3,24 +3,24 @@ Tools for server archival and hosting archived servers
 
 ## Requirements
 
-* Python 3.9 (probably works for 3.7+)
+* Python 3.9 (probably works for 3.7+).
 
 * Install pip and screen, if you don't already have them.
 
   ```
   sudo apt-get install screen pip
   ```
-* Using `pip`, install mcrcon and schedule
+* Using `pip`, install mcrcon and schedule.
   ```
   pip install mcrcon schedule
   ```
-* Set the environment variables for the RCON password, port, and the server address.
+* Set the environment variables for the RCON password, port~~, and the server address~~.
   
-  Since this is designed to be run on the server, the address can just be the private IPv4 address. `localhost` prolly works too.
+  Since this is designed to be run on the hosting computer, `localhost` should just work.
+
   ```bash
   export MC_RCON_PASSWORD=password123
   export MC_RCON_PORT=1234
-  export MC_HOST_ADDRESS=0.0.0.0
   ```
 * Scripts should be run on the hosting server.
 
