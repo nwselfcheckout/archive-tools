@@ -56,13 +56,29 @@ def get_next_server():
     return x
 
 
+def get_launch_args(folder):
+    """
+    Get Java launch args for the server.
+
+    Checks if the server folder contains additional launch arguments
+    and appends them to the "usual" launch args.
+    """
+    try:
+        with open(os.path.join(folder, "mp_args.txt"), "r") as f:
+            mp_args = f.read()
+            return f"{LAUNCH_ARGS} {mp_args}"
+    except Exception:
+        return LAUNCH_ARGS
+
+
 def start_server():
     """Open a new terminal window and start the server."""
-    f = get_next_server()
+    folder = get_next_server()
+    launch_args = get_launch_args(folder)
     cmd = (f"screen -S mc_server -dm bash -c"
-           f" \"cd '{os.path.abspath(f)}';"
-           f" java {LAUNCH_ARGS}\"")
-    
+           f" \"cd '{os.path.abspath(folder)}';"
+           f" java {launch_args}\"")
+
     print()
     print("> " + cmd)
     
