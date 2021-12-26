@@ -15,7 +15,7 @@ import schedule
 from mcrcon import MCRcon
 
 NO_GUI = True
-LAUNCH_ARGS = ("-Xms2G -Xmx16G -XX:+UseG1GC -jar server.jar"
+LAUNCH_ARGS = ("-Xms2G -Xmx12G -XX:+UseG1GC -jar server.jar"
                f" {'nogui' if NO_GUI else ''}")
 
 START_TIME = time.time()
