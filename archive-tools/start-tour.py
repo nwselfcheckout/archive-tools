@@ -28,19 +28,21 @@ YELLOW = "#FAA61A"
 RED = "#F04747"
 
 # Assumes server folder name starts with "NWSC"
-dirs = sorted(x for x in os.listdir() if os.path.isdir(x) and x.startswith("NWSC"))
+dirs = sorted(x for x in os.listdir() if os.path.isdir(x)
+              and x.startswith("NWSC"))
+
 
 def select_version():
     """Display a menu to select the version to host first."""
     selection = 0
     max_value = len(dirs)
-    
+
     while True:
         print("Select NWSC version:")
         for i, version in enumerate(dirs):
             print(f"[{i+1}]    {version}")
         selection = int(input("Version: "))
-        
+
         if 1 <= selection <= max_value:
             for i in range(selection-1):
                 get_next_server()
@@ -81,7 +83,7 @@ def start_server():
 
     print()
     print("> " + cmd)
-    
+
     print()
     print(f"Starting {f}...")
     print(f"Next up: {dirs[0]}")
@@ -104,9 +106,10 @@ def warn_server(color, time):
 
 
 def stop_and_start_server():
-    send_command("kick @a The server is restarting. Service will resume momentarily.")
+    send_command(
+        "kick @a The server is restarting. Service will resume momentarily.")
     send_command("stop")
-    print("Sent a request to stop the server. Will relanch in 60 seconds.")
+    print("Sent a request to stop the server. Will relaunch in 60 seconds.")
     time.sleep(60)
     start_server()
 
