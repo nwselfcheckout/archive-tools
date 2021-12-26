@@ -14,9 +14,7 @@ import json
 import schedule
 from mcrcon import MCRcon
 
-NO_GUI = True
-LAUNCH_ARGS = ("-Xms2G -Xmx12G -XX:+UseG1GC -jar server.jar"
-               f" {'nogui' if NO_GUI else ''}")
+LAUNCH_ARGS = "-Xms2G -Xmx12G -XX:+UseG1GC"
 
 START_TIME = time.time()
 
@@ -79,7 +77,7 @@ def start_server():
     launch_args = get_launch_args(folder)
     cmd = (f"screen -S mc_server -dm bash -c"
            f" \"cd '{os.path.abspath(folder)}';"
-           f" java {launch_args}\"")
+           f" java {launch_args} -jar server.jar nogui\"")
 
     print()
     print("> " + cmd)
