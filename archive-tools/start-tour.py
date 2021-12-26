@@ -85,7 +85,7 @@ def start_server():
     print("> " + cmd)
 
     print()
-    print(f"Starting {f}...")
+    print(f"Starting {folder}...")
     print(f"Next up: {dirs[0]}")
     os.system(cmd)
 
