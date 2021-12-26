@@ -1,4 +1,4 @@
-# Changes made following [CVE-2021-45105](https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2021-45105))
+# Changes made following [CVE-2021-45105](https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2021-45105)
 
 ## Affected saves
 
@@ -11,7 +11,7 @@
 |              | ~~Ubuntu Test 1~~* |
 |              | ~~Ubuntu Test 2~~* |
 
-> \* These saves are upgraded to 1.18.1 since there is no need for
+> \* These saves are upgraded to 1.18.1 (or later, if compatible) since there is no need for
 > them to be hosted on their original version.
 
 
@@ -25,7 +25,15 @@ The launch script will now look for a `mp_args.txt` file in the server folder an
 
 Save folders of the affected versions are monkey-patched with the appropriate Log4j configuration files to be loaded by the launch arguments.
 
-Affected saves will contain
+Affected saves will contain:
+
+* An `mp_args.txt` file that contains the additional launch arguments.
+
+* *For servers running on versions 1.7 – 1.11.2,* a Log4j config file `log4j2_17-111.xml`.
+
+* *For servers running on versions 1.12 – 1.16.5,* a Log4j config file `log4j2_112-116.xml`.
+
+* > *Servers on version 1.17 and above do not need an additional configuration file.*
 
 # From [minecraft.net](https://www.minecraft.net/en-us/article/important-message--security-vulnerability-java-edition)
 
