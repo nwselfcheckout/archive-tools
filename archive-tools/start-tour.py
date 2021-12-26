@@ -65,7 +65,7 @@ def get_launch_args(folder):
     """
     try:
         with open(os.path.join(folder, "mp_args.txt"), "r") as f:
-            mp_args = f.read()
+            mp_args = f.read().strip()
             return f"{LAUNCH_ARGS} {mp_args}"
     except Exception:
         return LAUNCH_ARGS
