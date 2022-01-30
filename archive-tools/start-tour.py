@@ -14,7 +14,7 @@ import json
 import schedule
 from mcrcon import MCRcon
 
-LAUNCH_ARGS = "-Xms2G -Xmx12G -XX:+UseG1GC"
+LAUNCH_ARGS = "-Xms2G -Xmx10G -XX:+UseG1GC"
 
 START_TIME = time.time()
 
