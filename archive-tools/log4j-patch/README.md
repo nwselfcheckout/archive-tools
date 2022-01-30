@@ -5,14 +5,15 @@
 | 1.7 – 1.11.2 | 1.12 – 1.16.5      | 1.17         | 1.18  |
 | ------------ | ------------------ | ------------ | ----- |
 | NWSC 1       | NWSC 2.2           | NWSC 5       | *n/a* |
-| NWSC 2       | NWSC 3             | NWSC 6       |
+| NWSC 2       | NWSC 3             | ~~NWSC 6~~*  |
 |              | NWSC 4             | ~~Parkour~~* |
 |              | NWSC 4.2           |
 |              | ~~Ubuntu Test 1~~* |
 |              | ~~Ubuntu Test 2~~* |
 
-> \* These saves are upgraded to 1.18.1 (or later, if compatible) since there is no need for
-> them to be hosted on their original version.
+> \* These saves are upgraded to 1.18.1 (or later, if compatible) since there is no need for them to be hosted on their original version.
+>
+> \* NWSC 6 was updated to 1.18.1.
 
 
 ## Changes
@@ -32,8 +33,8 @@ Affected saves will contain:
 * *For servers running on versions 1.7 – 1.11.2,* a Log4j config file `log4j2_17-111.xml`.
 
 * *For servers running on versions 1.12 – 1.16.5,* a Log4j config file `log4j2_112-116.xml`.
+   > *Servers on version 1.17 and above do not need an additional configuration file.*
 
-* > *Servers on version 1.17 and above do not need an additional configuration file.*
 
 # From [minecraft.net](https://www.minecraft.net/en-us/article/important-message--security-vulnerability-java-edition)
 
