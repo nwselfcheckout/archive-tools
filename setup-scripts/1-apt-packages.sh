@@ -9,3 +9,5 @@ screen --version
 java --version
 pip --version
 firewalld
+
+pip install mcrcon schedule
