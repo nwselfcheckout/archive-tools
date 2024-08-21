@@ -53,6 +53,20 @@ def parse_coordinates(message: str):
     return CoordinateEntry(x, y, z, comment)
 
 
+def parse_log_content(raw_str: str):
+    """Parse content of the log file.
+
+    Assumes the argument is a decoded, newline-terminated string of the log file.
+    """
+    for line in raw_str.splitlines():
+        entry = parse_log_entry(line)
+        if entry:
+            coords = parse_coordinates(entry.content)
+            if coords:
+                print(entry.content)
+                print(coords)
+
+
 def scrape_all(log_folder: Path):
     log_files = [
         Path(log_folder).joinpath(f)
@@ -66,15 +80,40 @@ def scrape_all(log_folder: Path):
         with gzip.open(log_file, "r") as f:
             # Boldly assume log file name is in the format: YYYY-MM-DD-n.log.gz
             dt = datetime(*(int(i) for i in log_file.name.split("-")[:3]))
+            parse_log_content(f.read().decode())
 
-            for line in f.read().decode().splitlines():
-                entry = parse_log_entry(line)
-                if entry:
-                    coords = parse_coordinates(entry.content)
-                    if coords:
-                        print(entry.content)
-                        print(coords)
+"""
+need to keep track of:
+- last SAVED log file
+- line number read in LATEST.log
+
+in each polling cycle:
+- check the highest number of the log files
+- if it is different than the last SAVED log file, this means a new log file was created.
+    - starting from that file:
+        - read and parse coords from the line number
+        - update file name
+- otherwise:
+    - just read from latest.log
+    - update line number
+"""
+
+
+def poll_logs(log_folder: str):
+    log_files = os.listdir(log_folder)
+    log_files.sort()
+    log_files.remove("latest.log")
+
+    last_log_file = os.getenv("last_log_file")
+    last_line_read = os.getenv("last_line_read")
+
+    if last_log_file is None:
+        scrape_all(log_folder)
+        os.environ["last_log_file"] = log_files[-1]
+
+    print(log_files)
 
 
 if __name__ == "__main__":
-    scrape_all("logs")
+    # scrape_all("logs")
+    poll_logs("logs")
