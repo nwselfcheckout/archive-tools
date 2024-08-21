@@ -5,6 +5,8 @@ from pathlib import Path
 from datetime import datetime
 from dataclasses import dataclass
 
+last_log_file = None
+
 
 @dataclass
 class CoordinateEntry:
@@ -30,7 +32,7 @@ def parse_log_entry(raw_entry: str) -> PlayerMessage:
 
 
 def parse_coordinates(message: str):
-    res = re.search(r"(-?\d+) +(-?\d+) *(-?\d+)?", message)
+    res = re.search(r"(-?\d+)[, ;]+(-?\d+)[, ;]*(-?\d+)?", message)
 
     if res is None:
         return None
