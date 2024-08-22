@@ -1,11 +1,37 @@
 import os
 import re
 import gzip
+import json
 from pathlib import Path
 from datetime import datetime
 from dataclasses import dataclass
 
-last_log_file = None
+
+@dataclass
+class LastRead:
+    log_file: str
+    line_number: int
+
+    @classmethod
+    def load(cls):
+        """Load the last read log file and line number from a JSON file."""
+        try:
+            with open("last_read.json", "r") as f:
+                data = json.load(f)
+                return cls(**data)
+        except FileNotFoundError:
+            return None
+
+    def write(self):
+        """Save the current state to a JSON file."""
+        with open("last_read.json", "w") as f:
+            json.dump(self.__dict__, f)
+
+    def update(self, log_file: str = None, line_number: int = None):
+        """Update the log file and line number, and save the state."""
+        self.log_file = log_file or self.log_file
+        self.line_number = line_number or self.line_number
+        self.write()
 
 
 @dataclass
@@ -75,12 +101,12 @@ def read_from_logfile(log_file: Path):
         parse_log_content(f.read().decode())
 
 
-def read_from_latest(log_folder: Path):
+def read_from_latest(log_folder: Path, last_read: LastRead):
     """Read from latest.log. Also updates the last read line number."""
     with open(Path(log_folder).joinpath("latest.log"), "r") as f:
         content = f.read()
         parse_log_content(content)
-        os.environ["last_line_read"] = str(len(content.splitlines()))
+        last_read.update(line_number=str(len(content.splitlines())))
 
 
 def scrape_all(log_folder: Path):
@@ -98,7 +124,8 @@ def scrape_all(log_folder: Path):
         read_from_logfile(log_file)
 
     # Then, parse the current log file.
-    read_from_latest(log_folder)
+    last_read = LastRead(log_files[-1].name, 0)
+    read_from_latest(log_folder, last_read)
 
 
 """
@@ -123,20 +150,13 @@ def poll_logs(log_folder: str):
     log_files.sort()
     log_files = [f for f in log_files if f.endswith(".log.gz")]
 
-    last_log_file = os.getenv("last_log_file")  # The last SAVED log file (.log.gz file)
-    last_line_read = os.getenv("last_line_read")
+    last_read = LastRead.load()
 
-    print(f"Last saved log file: {last_log_file}")
-    print(f"Last line read in latest: {last_line_read}")
-
-    # Nothing is read, this is the first run.
-    if last_log_file is None:
+    if last_read is None:
+        # Nothing is read, this is the first run.
         scrape_all(log_folder)
-        os.environ["last_log_file"] = log_files[-1]
 
-    print(f"Last saved log file: {last_log_file}")
-    print(f"Last line read in latest: {last_line_read}")
-
+    print(last_read)
     print(log_files)
 
 
