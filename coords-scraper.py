@@ -73,7 +73,9 @@ def scrape_all(log_folder: Path):
         for f in os.listdir(log_folder)
         if f.endswith(".log.gz")
     ]
+    log_files.sort()  # God bless ISO-8601.
 
+    # First, parse all of the saved log files.
     for log_file in log_files:
         if not log_file.is_file:
             continue
@@ -81,6 +83,11 @@ def scrape_all(log_folder: Path):
             # Boldly assume log file name is in the format: YYYY-MM-DD-n.log.gz
             dt = datetime(*(int(i) for i in log_file.name.split("-")[:3]))
             parse_log_content(f.read().decode())
+
+    # Then, parse the current log file.
+    with open(Path(log_folder).joinpath("latest.log"), "r") as f:
+        parse_log_content(f.read())
+
 
 """
 need to keep track of:
@@ -102,9 +109,9 @@ in each polling cycle:
 def poll_logs(log_folder: str):
     log_files = os.listdir(log_folder)
     log_files.sort()
-    log_files.remove("latest.log")
+    log_files = [f for f in log_files if f.endswith(".log.gz")]
 
-    last_log_file = os.getenv("last_log_file")
+    last_log_file = os.getenv("last_log_file")  # The last SAVED log file (.log.gz file)
     last_line_read = os.getenv("last_line_read")
 
     if last_log_file is None:
