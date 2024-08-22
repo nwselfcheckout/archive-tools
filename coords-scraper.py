@@ -100,13 +100,12 @@ def read_from_logfile(log_file: Path):
 
 
 def read_from_latest(log_folder: Path, last_read: LastRead):
-    """Read from latest.log. Also updates the last read line number."""
+    """Read from the last line read in latest.log."""
     with open(Path(log_folder).joinpath("latest.log"), "r") as f:
-        content = f.read()
         log_entries = f.read().splitlines()
-
-        parse_log_entries(content)
-        last_read.update(line_number=str(len(content.splitlines())))
+        from_line = last_read.line_number + 1
+        parse_log_entries(log_entries[from_line:])
+        last_read.update(line_number=len(log_entries))
 
 
 def scrape_all(log_folder: Path):
@@ -151,6 +150,7 @@ def poll_logs(log_folder: str):
     last_read = LastRead.load()
 
     scrape_all(log_folder)
+    print(LastRead.load())
     return
 
     # Nothing is read, this is the first run.
