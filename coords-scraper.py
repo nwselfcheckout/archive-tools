@@ -156,15 +156,16 @@ def poll_logs(log_folder: str):
         scrape_all(log_folder)
         return
 
-    # New log file was rolled over.
+    # Scrape log files that was just created.
     if last_read.log_file != log_files[-1]:
         print("New log file(s) rolled over.")
         new_index = log_files.index(last_read.log_file) + 1
         for log_file in log_files[new_index:]:
             read_from_logfile(log_folder / log_file)
-        last_read.update(log_file=log_file[-1])
+        last_read.update(log_file=log_files[-1])
 
-        read_from_latest(log_folder, last_read)
+    # Scrape from latest.log.
+    read_from_latest(log_folder, last_read)
 
     print(last_read)
     print(log_files)
