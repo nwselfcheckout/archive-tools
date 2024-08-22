@@ -49,14 +49,6 @@ class PlayerMessage:
     content: str
 
 
-def parse_log_entry(raw_entry: str) -> PlayerMessage:
-    res = re.match(
-        r"\[(?P<time>\d\d:\d\d:\d\d)\] \[.+INFO\]: <(?P<username>.+)> (?P<content>.+)",
-        raw_entry,
-    )
-    return PlayerMessage(**res.groupdict()) if res else None
-
-
 def parse_coordinates(message: str):
     res = re.search(r"(-?\d+)[, ;]+(-?\d+)[, ;]*(-?\d+)?", message)
 
@@ -79,12 +71,18 @@ def parse_coordinates(message: str):
     return CoordinateEntry(x, y, z, comment)
 
 
-def parse_log_content(raw_str: str):
-    """Parse content of the log file.
+def parse_log_entry(raw_entry: str) -> PlayerMessage | None:
+    """Parse given log entry and return a `PlayerMessage` object. Returns `None` if not a player message."""
+    res = re.match(
+        r"\[(?P<time>\d\d:\d\d:\d\d)\] \[.+INFO\]: <(?P<username>.+)> (?P<content>.+)",
+        raw_entry,
+    )
+    return PlayerMessage(**res.groupdict()) if res else None
 
-    Assumes the argument is a decoded, newline-terminated string of the log file.
-    """
-    for line in raw_str.splitlines():
+
+def parse_log_entries(entries: list[str]):
+    """Parse log entries."""
+    for line in entries:
         entry = parse_log_entry(line)
         if entry:
             coords = parse_coordinates(entry.content)
@@ -98,14 +96,16 @@ def read_from_logfile(log_file: Path):
     with gzip.open(log_file, "r") as f:
         # Boldly assume log file name is in the format: YYYY-MM-DD-n.log.gz
         dt = datetime(*(int(i) for i in log_file.name.split("-")[:3]))
-        parse_log_content(f.read().decode())
+        parse_log_entries(f.read().decode().splitlines())
 
 
 def read_from_latest(log_folder: Path, last_read: LastRead):
     """Read from latest.log. Also updates the last read line number."""
     with open(Path(log_folder).joinpath("latest.log"), "r") as f:
         content = f.read()
-        parse_log_content(content)
+        log_entries = f.read().splitlines()
+
+        parse_log_entries(content)
         last_read.update(line_number=str(len(content.splitlines())))
 
 
@@ -149,6 +149,9 @@ def poll_logs(log_folder: str):
     log_folder = Path(log_folder)
     log_files = sorted(f for f in os.listdir(log_folder) if f.endswith(".log.gz"))
     last_read = LastRead.load()
+
+    scrape_all(log_folder)
+    return
 
     # Nothing is read, this is the first run.
     if last_read is None:
