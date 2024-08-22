@@ -67,6 +67,22 @@ def parse_log_content(raw_str: str):
                 print(coords)
 
 
+def read_from_logfile(log_file: Path):
+    """Read from a SAVED log file, ending with .log.gz."""
+    with gzip.open(log_file, "r") as f:
+        # Boldly assume log file name is in the format: YYYY-MM-DD-n.log.gz
+        dt = datetime(*(int(i) for i in log_file.name.split("-")[:3]))
+        parse_log_content(f.read().decode())
+
+
+def read_from_latest(log_folder: Path):
+    """Read from latest.log. Also updates the last read line number."""
+    with open(Path(log_folder).joinpath("latest.log"), "r") as f:
+        content = f.read()
+        parse_log_content(content)
+        os.environ["last_line_read"] = str(len(content.splitlines()))
+
+
 def scrape_all(log_folder: Path):
     log_files = [
         Path(log_folder).joinpath(f)
@@ -79,14 +95,10 @@ def scrape_all(log_folder: Path):
     for log_file in log_files:
         if not log_file.is_file:
             continue
-        with gzip.open(log_file, "r") as f:
-            # Boldly assume log file name is in the format: YYYY-MM-DD-n.log.gz
-            dt = datetime(*(int(i) for i in log_file.name.split("-")[:3]))
-            parse_log_content(f.read().decode())
+        read_from_logfile(log_file)
 
     # Then, parse the current log file.
-    with open(Path(log_folder).joinpath("latest.log"), "r") as f:
-        parse_log_content(f.read())
+    read_from_latest(log_folder)
 
 
 """
@@ -114,9 +126,16 @@ def poll_logs(log_folder: str):
     last_log_file = os.getenv("last_log_file")  # The last SAVED log file (.log.gz file)
     last_line_read = os.getenv("last_line_read")
 
+    print(f"Last saved log file: {last_log_file}")
+    print(f"Last line read in latest: {last_line_read}")
+
+    # Nothing is read, this is the first run.
     if last_log_file is None:
         scrape_all(log_folder)
         os.environ["last_log_file"] = log_files[-1]
+
+    print(f"Last saved log file: {last_log_file}")
+    print(f"Last line read in latest: {last_line_read}")
 
     print(log_files)
 
