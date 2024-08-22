@@ -146,15 +146,25 @@ in each polling cycle:
 
 
 def poll_logs(log_folder: str):
-    log_files = os.listdir(log_folder)
-    log_files.sort()
-    log_files = [f for f in log_files if f.endswith(".log.gz")]
-
+    log_folder = Path(log_folder)
+    log_files = sorted(f for f in os.listdir(log_folder) if f.endswith(".log.gz"))
     last_read = LastRead.load()
 
+    # Nothing is read, this is the first run.
     if last_read is None:
-        # Nothing is read, this is the first run.
+        print("First run, scraping everything.")
         scrape_all(log_folder)
+        return
+
+    # New log file was rolled over.
+    if last_read.log_file != log_files[-1]:
+        print("New log file(s) rolled over.")
+        new_index = log_files.index(last_read.log_file) + 1
+        for log_file in log_files[new_index:]:
+            read_from_logfile(log_folder / log_file)
+        last_read.update(log_file=log_file[-1])
+
+        read_from_latest(log_folder, last_read)
 
     print(last_read)
     print(log_files)
