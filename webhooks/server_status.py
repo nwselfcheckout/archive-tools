@@ -13,6 +13,9 @@ SERVER_ADDRESS = os.environ["SERVER_ADDRESS"]
 
 @dataclass
 class ServerInfo:
+    total_queries = 0
+    successful_queries = 0
+
     address: str = SERVER_ADDRESS
     is_online: bool = False
     players: list[str] = None
@@ -21,13 +24,18 @@ class ServerInfo:
     version: str = None
     motd: str = None
 
+    def get_uptime(self) -> float:
+        return self.successful_queries / self.total_queries if self.total_queries else 0
+
     def to_embed(self) -> Embed:
         if self.is_online:
             embed = Embed(color=discord.Color.green())
         else:
             embed = Embed(color=discord.Color.red())
+
         embed.title = "Server status"
         embed.add_field(name="Address", value=f"```{self.address}```", inline=False)
+        embed.set_footer(text=f"{self.get_uptime():.2%} uptime")
         embed.timestamp = datetime.now()
 
         if not self.is_online:
@@ -84,10 +92,13 @@ def to_markdown(parsed: list[ParsedMotdComponent]) -> str:
 
 def query_server() -> ServerInfo:
     server = JavaServer.lookup(SERVER_ADDRESS)
+    ServerInfo.total_queries += 1
 
     try:
         query = server.query()
         status = server.status()
+        ServerInfo.successful_queries += 1
+
         return ServerInfo(
             is_online=True,
             players=query.players.names,
@@ -96,7 +107,7 @@ def query_server() -> ServerInfo:
             version=status.version.name,
             motd=to_markdown(status.motd.parsed),
         )
-    except TimeoutError:
+    except Exception:
         return ServerInfo(is_online=False)
 
 
