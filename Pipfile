@@ -8,6 +8,7 @@ mcrcon = "*"
 schedule = "*"
 "discord.py" = "*"
 requests = "*"
+mcstatus = "*"
 
 [dev-packages]
 black = "*"
