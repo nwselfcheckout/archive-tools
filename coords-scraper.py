@@ -1,3 +1,18 @@
+"""
+Scrape coordinates sent by players from the log files.
+
+How it works: Latest logs are kept in the `latest.log` file. Minecraft will save
+and roll over logs once the day passes or the size of `latest.log` is
+sufficiently large.
+
+To poll for changes, we look for entries in the `latest.log` file and keep track
+of how far we've read. This is tracked using a JSON file `last_read.json`.
+
+To also scrape any coordinates in older log files or if the logs were rolled
+over in between polling cycle, we also keep track of the last log file that was
+processed in the same file.
+"""
+
 import os
 import re
 import gzip
@@ -45,7 +60,12 @@ class CoordinateEntry:
 
     @classmethod
     def from_message(cls, message: str):
-        """Extract coordinates entry from a text."""
+        """
+        Extract coordinates entry from a text.
+
+        As loosely as possible, tries to look for a pair or triplet of numbers
+        separated by commas, space, or semicolons. Returns `None` if not found.
+        """
         res = re.search(r"(-?\d+)[, ;]+(-?\d+)[, ;]*(-?\d+)?", message)
 
         if res is None:
@@ -53,10 +73,11 @@ class CoordinateEntry:
 
         first, second, third = (int(i) if i else None for i in res.groups())
         if third is None:
-            x, y, z = first, None, second
+            x, y, z = first, None, second  # no Y-coordinate
         else:
-            x, y, z = first, second, third
+            x, y, z = first, second, third  # all three
 
+        # Look for comments.
         start, end = res.span()
         if start == 0:
             comment = message[end:]
@@ -75,7 +96,14 @@ class PlayerMessage:
 
     @classmethod
     def from_log_entry(cls, log_entry: str):
-        """Extract a player message from a log entry. Returns `None` if not a player message."""
+        """
+        Extract a player message from a given log entry.
+
+        Player messages are always an [INFO] event. Allows matching for non-
+        vanilla clients (for example, Paper servers marks the record as
+        "[Async Chat Thread - #N/INFO]").Returns `None` if the log entry is not
+        a player message.
+        """
         res = re.match(
             r"\[(?P<time>\d\d:\d\d:\d\d)\] \[.+INFO\]: <(?P<username>.+)> (?P<content>.+)",
             log_entry,
@@ -91,7 +119,7 @@ class PlayerMessage:
 
 
 def get_coordinates(log_entries: list[str], log_date: date) -> list[CoordinateEntry]:
-    """Parse log entries."""
+    """Extract coordinate entries from log entries."""
     coords = []
     for line in log_entries:
         player_message = PlayerMessage.from_log_entry(line)
@@ -109,61 +137,44 @@ def get_coordinates(log_entries: list[str], log_date: date) -> list[CoordinateEn
     return coords
 
 
-def read_from_logfile(log_file: Path):
+def read_from_saved(log_file: Path) -> list[CoordinateEntry]:
     """Read from a SAVED log file, ending with .log.gz."""
     with gzip.open(log_file, "r") as f:
         # Boldly assume log file name is in the format: YYYY-MM-DD-n.log.gz
         log_date = date(*(int(i) for i in log_file.name.split("-")[:3]))
-        get_coordinates(f.read().decode().splitlines(), log_date)
+        return get_coordinates(f.read().decode().splitlines(), log_date)
 
 
-def read_from_latest(log_folder: Path, last_read: LastRead):
+def read_from_latest(log_folder: Path, last_read: LastRead) -> list[CoordinateEntry]:
     """Read from the last line read in latest.log."""
     with open(Path(log_folder).joinpath("latest.log"), "r") as f:
         log_entries = f.read().splitlines()
         from_line = last_read.line_number + 1
 
-        get_coordinates(log_entries[from_line:], date.today())
         last_read.update(line_number=len(log_entries))
+        return get_coordinates(log_entries[from_line:], date.today())
 
 
 def scrape_all(log_folder: Path):
-    log_files = [
+    log_files = sorted(
         Path(log_folder).joinpath(f)
         for f in os.listdir(log_folder)
         if f.endswith(".log.gz")
-    ]
-    log_files.sort()  # God bless ISO-8601.
+    )  # God bless ISO-8601.
+    coords = []
 
     # First, parse all of the saved log files.
     for log_file in log_files:
-        if not log_file.is_file:
-            continue
-        read_from_logfile(log_file)
+        coords += read_from_saved(log_file)
 
     # Then, parse the current log file.
     last_read = LastRead(log_files[-1].name, 0)
-    read_from_latest(log_folder, last_read)
+    coords += read_from_latest(log_folder, last_read)
+    return coords
 
 
-"""
-need to keep track of:
-- last SAVED log file
-- line number read in LATEST.log
-
-in each polling cycle:
-- check the highest number of the log files
-- if it is different than the last SAVED log file, this means a new log file was created.
-    - starting from that file:
-        - read and parse coords from the line number
-        - update file name
-- otherwise:
-    - just read from latest.log
-    - update line number
-"""
-
-
-def poll_logs(log_folder: str):
+def check_logs(log_folder: str | Path):
+    """Check the log folders for any new coordinate entries."""
     log_folder = Path(log_folder)
     log_files = sorted(f for f in os.listdir(log_folder) if f.endswith(".log.gz"))
     last_read = LastRead.load()
@@ -171,22 +182,21 @@ def poll_logs(log_folder: str):
     # Nothing is read, this is the first run.
     if last_read is None:
         print("First run, scraping everything.")
-        scrape_all(log_folder)
-        return
+        return scrape_all(log_folder)
 
     # Scrape log files that was just created.
+    coords = []
     if last_read.log_file != log_files[-1]:
         print("New log file(s) rolled over.")
         new_index = log_files.index(last_read.log_file) + 1
         for log_file in log_files[new_index:]:
-            read_from_logfile(log_folder / log_file)
+            coords += read_from_saved(log_folder / log_file)
         last_read.update(log_file=log_files[-1])
 
     # Scrape from latest.log.
-    read_from_latest(log_folder, last_read)
-
+    coords += read_from_latest(log_folder, last_read)
     print(last_read)
-    print(log_files)
+    return coords
 
 
 if __name__ == "__main__":
