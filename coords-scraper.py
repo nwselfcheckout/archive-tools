@@ -39,12 +39,13 @@ class CoordinateEntry:
     x: int | None
     y: int | None
     z: int | None
-    comment: str
+    comment: str | None
     username: str = None
     dt: datetime = None
 
     @classmethod
     def from_message(cls, message: str):
+        """Extract coordinates entry from a text."""
         res = re.search(r"(-?\d+)[, ;]+(-?\d+)[, ;]*(-?\d+)?", message)
 
         if res is None:
@@ -61,7 +62,7 @@ class CoordinateEntry:
             comment = message[end:]
         else:
             comment = message[:start]
-        comment = comment.strip()
+        comment = comment.strip() or None
 
         return cls(x, y, z, comment)
 
@@ -74,6 +75,7 @@ class PlayerMessage:
 
     @classmethod
     def from_log_entry(cls, log_entry: str):
+        """Extract a player message from a log entry. Returns `None` if not a player message."""
         res = re.match(
             r"\[(?P<time>\d\d:\d\d:\d\d)\] \[.+INFO\]: <(?P<username>.+)> (?P<content>.+)",
             log_entry,
@@ -88,9 +90,9 @@ class PlayerMessage:
         return None
 
 
-def get_coordinates(entries: list[str], log_date: date):
+def get_coordinates(log_entries: list[str], log_date: date) -> list[CoordinateEntry]:
     """Parse log entries."""
-    for line in entries:
+    for line in log_entries:
         player_message = PlayerMessage.from_log_entry(line)
         if player_message:
             coord = CoordinateEntry.from_message(player_message.content)
