@@ -13,13 +13,13 @@ over in between polling cycle, we also keep track of the last log file that was
 processed in the same file.
 """
 
-import os
-import re
 import gzip
 import json
-from pathlib import Path
-from datetime import datetime, date, time
+import os
+import re
 from dataclasses import dataclass
+from datetime import datetime, date, time
+from pathlib import Path
 
 
 @dataclass
@@ -140,6 +140,7 @@ def get_coordinates(log_entries: list[str], log_date: date) -> list[CoordinateEn
 def read_from_saved(log_file: Path) -> list[CoordinateEntry]:
     """Read from a SAVED log file, ending with .log.gz."""
     with gzip.open(log_file, "r") as f:
+        print(f"Reading from {log_file.name}")
         # Boldly assume log file name is in the format: YYYY-MM-DD-n.log.gz
         log_date = date(*(int(i) for i in log_file.name.split("-")[:3]))
         return get_coordinates(f.read().decode().splitlines(), log_date)
@@ -149,8 +150,7 @@ def read_from_latest(log_folder: Path, last_read: LastRead) -> list[CoordinateEn
     """Read from the last line read in latest.log."""
     with open(Path(log_folder).joinpath("latest.log"), "r") as f:
         log_entries = f.read().splitlines()
-        from_line = last_read.line_number + 1
-
+        from_line = last_read.line_number
         last_read.update(line_number=len(log_entries))
         return get_coordinates(log_entries[from_line:], date.today())
 
