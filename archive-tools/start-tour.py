@@ -26,8 +26,7 @@ YELLOW = "#FAA61A"
 RED = "#F04747"
 
 # Assumes server folder name starts with "NWSC"
-dirs = sorted(x for x in os.listdir() if os.path.isdir(x)
-              and x.startswith("NWSC"))
+dirs = sorted(x for x in os.listdir() if os.path.isdir(x) and x.startswith("NWSC"))
 
 
 def select_version():
@@ -42,7 +41,7 @@ def select_version():
         selection = int(input("Version: "))
 
         if 1 <= selection <= max_value:
-            for i in range(selection-1):
+            for i in range(selection - 1):
                 get_next_server()
             return
 
@@ -75,9 +74,11 @@ def start_server():
     """Open a new terminal window and start the server."""
     folder = get_next_server()
     launch_args = get_launch_args(folder)
-    cmd = (f"screen -S mc_server -dm bash -c"
-           f" \"cd '{os.path.abspath(folder)}';"
-           f" java {launch_args} -jar server.jar nogui\"")
+    cmd = (
+        f"screen -S mc_server -dm bash -c"
+        f" \"cd '{os.path.abspath(folder)}';"
+        f' java {launch_args} -jar server.jar nogui"'
+    )
 
     print()
     print("> " + cmd)
@@ -89,23 +90,27 @@ def start_server():
 
 
 def send_command(cmd):
-    with MCRcon(host="localhost", password=RCON_PASSWORD, port=RCON_PORT, timeout=10) as mc:
+    with MCRcon(
+        host="localhost", password=RCON_PASSWORD, port=RCON_PORT, timeout=10
+    ) as mc:
         print("[CONSOLE] " + mc.command(cmd))
 
 
 def warn_server(color, time):
     """Send a message to warn players that the server is restarting."""
-    tellraw_arg = ["", {"text": "⚠ ", "color": color},
-                   {"text": "Warning    ", "bold": True, "color": color},
-                   {"text": f"The server will restart in {time}.", "color": color}]
+    tellraw_arg = [
+        "",
+        {"text": "⚠ ", "color": color},
+        {"text": "Warning    ", "bold": True, "color": color},
+        {"text": f"The server will restart in {time}.", "color": color},
+    ]
 
     send_command("tellraw @a " + json.dumps(tellraw_arg))
     print(f"Sent a warning that the server will restart in {time}.")
 
 
 def stop_and_start_server():
-    send_command(
-        "kick @a The server is restarting. Service will resume momentarily.")
+    send_command("kick @a The server is restarting. Service will resume momentarily.")
     send_command("stop")
     print("Sent a request to stop the server. Will relaunch in 60 seconds.")
     time.sleep(60)
