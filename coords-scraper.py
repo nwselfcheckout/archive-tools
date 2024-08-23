@@ -92,6 +92,7 @@ class PlayerMessage:
 
 def get_coordinates(log_entries: list[str], log_date: date) -> list[CoordinateEntry]:
     """Parse log entries."""
+    coords = []
     for line in log_entries:
         player_message = PlayerMessage.from_log_entry(line)
         if not player_message:
@@ -103,8 +104,9 @@ def get_coordinates(log_entries: list[str], log_date: date) -> list[CoordinateEn
 
         coord.dt = datetime.combine(log_date, player_message.time)
         coord.username = player_message.username
-        # print(player_message)
         print(coord)
+        coords.append(coord)
+    return coords
 
 
 def read_from_logfile(log_file: Path):
