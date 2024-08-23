@@ -18,7 +18,7 @@ import json
 import os
 import re
 from dataclasses import dataclass
-from datetime import datetime, date, time
+from datetime import datetime, date, time, timezone
 from pathlib import Path
 
 
@@ -129,8 +129,7 @@ def get_coordinates(log_entries: list[str], log_date: date) -> list[CoordinateEn
         coord = CoordinateEntry.from_message(player_message.content)
         if not coord:
             continue
-
-        coord.dt = datetime.combine(log_date, player_message.time)
+        coord.dt = datetime.combine(log_date, player_message.time, timezone.utc)
         coord.username = player_message.username
         print(coord)
         coords.append(coord)
