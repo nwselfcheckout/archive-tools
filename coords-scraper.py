@@ -44,7 +44,7 @@ class CoordinateEntry:
 
 @dataclass
 class PlayerMessage:
-    time: str
+    time: time
     username: str
     content: str
 
@@ -77,7 +77,14 @@ def parse_log_entry(raw_entry: str) -> PlayerMessage | None:
         r"\[(?P<time>\d\d:\d\d:\d\d)\] \[.+INFO\]: <(?P<username>.+)> (?P<content>.+)",
         raw_entry,
     )
-    return PlayerMessage(**res.groupdict()) if res else None
+    if res:
+        d = res.groupdict()
+        return PlayerMessage(
+            time=time.fromisoformat(d["time"]),
+            username=d["username"],
+            content=d["content"],
+        )
+    return None
 
 
 def parse_log_entries(entries: list[str]):
