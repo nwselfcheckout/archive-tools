@@ -21,6 +21,8 @@ from dataclasses import dataclass
 from datetime import datetime, date, time, timezone
 from pathlib import Path
 
+from discord import Embed
+
 
 @dataclass
 class LastRead:
@@ -86,6 +88,25 @@ class CoordinateEntry:
         comment = comment.strip() or None
 
         return cls(x, y, z, comment)
+
+    def to_embed(self) -> Embed:
+        """Format as a Discord embed to send."""
+        embed = Embed()
+        embed.title = self.comment[:256] if self.comment else "*No label*"
+        embed.add_field(
+            name="X", value=f"```{'-' if self.x is None else self.x}```", inline=True
+        )
+        embed.add_field(
+            name="Y", value=f"```{'-' if self.y is None else self.y}```", inline=True
+        )
+        embed.add_field(
+            name="Z", value=f"```{'-' if self.z is None else self.z}```", inline=True
+        )
+        embed.set_footer(
+            text=self.username, icon_url=f"https://mc-heads.net/avatar/{self.username}"
+        )
+        embed.timestamp = self.dt
+        return embed
 
 
 @dataclass
