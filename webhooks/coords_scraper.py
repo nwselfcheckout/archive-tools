@@ -171,7 +171,7 @@ def scrape_all(log_folder: Path):
     return coords
 
 
-def check_logs(log_folder: str | Path) -> list[CoordinateEntry]:
+def check_for_coords(log_folder: str | Path) -> list[CoordinateEntry]:
     """Check the log folders for any new coordinate entries."""
     log_folder = Path(log_folder)
     log_files = sorted(f for f in os.listdir(log_folder) if f.endswith(".log.gz"))
@@ -201,4 +201,4 @@ def check_logs(log_folder: str | Path) -> list[CoordinateEntry]:
 
 
 if __name__ == "__main__":
-    check_logs("logs")
+    check_for_coords("logs")
