@@ -7,7 +7,7 @@ from discord import Embed, SyncWebhook
 from coords_scraper import CoordinateEntry, check_logs
 
 POLLING_INTERVAL = 30
-WEBHOOK_URL = os.environ["WEBHOOK_URL"]
+COORD_WEBHOOK_URL = os.environ["COORD_WEBHOOK_URL"]
 
 
 def coord_embed(entry: CoordinateEntry) -> Embed:
@@ -31,7 +31,7 @@ def coord_embed(entry: CoordinateEntry) -> Embed:
 
 def send_coords(log_folder: str):
     coords = check_logs(log_folder)
-    webhook = SyncWebhook.from_url(WEBHOOK_URL)
+    webhook = SyncWebhook.from_url(COORD_WEBHOOK_URL)
     for coord in coords:
         embed = coord_embed(coord)
         webhook.send(embed=embed)
