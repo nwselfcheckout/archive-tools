@@ -1,6 +1,9 @@
 import os
 from dataclasses import dataclass
+from datetime import datetime
 
+import discord
+from discord import Embed
 from mcstatus import JavaServer
 from mcstatus import motd
 from mcstatus.motd.components import ParsedMotdComponent
@@ -17,6 +20,34 @@ class ServerInfo:
     max_players: int = None
     version: str = None
     motd: str = None
+
+    def to_embed(self) -> Embed:
+        if self.is_online:
+            embed = Embed(color=discord.Color.green())
+        else:
+            embed = Embed(color=discord.Color.red())
+        embed.title = "Server status"
+        embed.add_field(name="Address", value=f"```{self.address}```", inline=False)
+        embed.timestamp = datetime.now()
+
+        if not self.is_online:
+            embed.add_field(name="Status", value="Server is unreachable", inline=False)
+            return embed
+
+        embed.add_field(name="Version", value=self.version, inline=True)
+        embed.add_field(name="Status", value="Online", inline=True)
+        embed.add_field(
+            name="Players",
+            value=f"{self.players_online}/{self.max_players}",
+            inline=True,
+        )
+        embed.add_field(name="Message of the day", value=self.motd, inline=False)
+        if self.players:
+            embed.add_field(
+                name="Player list", value="\n".join(self.players), inline=False
+            )
+
+        return embed
 
 
 # Supported MOTD-to-Markdown formatters.
@@ -57,13 +88,13 @@ def query_server() -> ServerInfo:
     try:
         query = server.query()
         status = server.status()
-
         return ServerInfo(
+            is_online=True,
             players=query.players.names,
             players_online=query.players.online,
             max_players=query.players.max,
             version=status.version.name,
-            motd=status.motd.to_plain(),
+            motd=to_markdown(status.motd.parsed),
         )
     except TimeoutError:
         return ServerInfo(is_online=False)
