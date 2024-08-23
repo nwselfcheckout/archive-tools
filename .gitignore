@@ -4,3 +4,4 @@ logs.zip
 last_read.json
 *.log.gz
 .idea/
+__pycache__/
