@@ -7,6 +7,7 @@ name = "pypi"
 mcrcon = "*"
 schedule = "*"
 "discord.py" = "*"
+requests = "*"
 
 [dev-packages]
 autopep8 = "*"
