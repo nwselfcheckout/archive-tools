@@ -26,8 +26,13 @@ from discord import Embed
 
 @dataclass
 class LastRead:
-    log_file: str
-    line_number: int
+    log_file: str = ""
+    line_number: int = 0
+
+    @classmethod
+    def init(cls):
+        cls().write()
+        return cls
 
     @classmethod
     def load(cls):
@@ -46,8 +51,8 @@ class LastRead:
 
     def update(self, log_file: str = None, line_number: int = None):
         """Update the log file and line number, and save the state."""
-        self.log_file = log_file or self.log_file
-        self.line_number = line_number or self.line_number
+        self.log_file = self.log_file if log_file is None else log_file
+        self.line_number = self.line_number if line_number is None else line_number
         self.write()
 
 
@@ -157,24 +162,39 @@ def get_coordinates(log_entries: list[str], log_date: date) -> list[CoordinateEn
 
 
 def read_from_saved(log_file: Path) -> list[CoordinateEntry]:
-    """Read from a SAVED log file, ending with .log.gz."""
+    """
+    Read from a SAVED log file, ending with .log.gz.
+
+    Starts from the`last_read` line number and will update the `last_read`
+    log file name and set the line number to zero (0).
+    """
     with gzip.open(log_file, "r") as f:
         print(f"Reading from {log_file.name}")
         # Boldly assume log file name is in the format: YYYY-MM-DD-n.log.gz
         log_date = date(*(int(i) for i in log_file.name.split("-")[:3]))
-        return get_coordinates(f.read().decode().splitlines(), log_date)
+        log_entries = f.read().decode().splitlines()
+
+        last_read = LastRead.load()
+        from_line = last_read.line_number
+        last_read.update(log_file=log_file.name, line_number=0)
+
+        return get_coordinates(log_entries[from_line:], log_date)
 
 
-def read_from_latest(log_folder: Path, last_read: LastRead) -> list[CoordinateEntry]:
-    """Read from the last line read in latest.log."""
+def read_from_latest(log_folder: Path) -> list[CoordinateEntry]:
+    """Read from the `last_read` line number in latest.log."""
     with open(Path(log_folder).joinpath("latest.log"), "r") as f:
         log_entries = f.read().splitlines()
+
+        last_read = LastRead.load()
         from_line = last_read.line_number
         last_read.update(line_number=len(log_entries))
+
         return get_coordinates(log_entries[from_line:], date.today())
 
 
 def scrape_all(log_folder: Path):
+    """Scrape all log files and in `latest.log`. This is for first-time running only."""
     log_files = sorted(
         Path(log_folder).joinpath(f)
         for f in os.listdir(log_folder)
@@ -183,12 +203,12 @@ def scrape_all(log_folder: Path):
     coords = []
 
     # First, parse all of the saved log files.
+    LastRead.init()
     for log_file in log_files:
         coords += read_from_saved(log_file)
 
     # Then, parse the current log file.
-    last_read = LastRead(log_files[-1].name, 0)
-    coords += read_from_latest(log_folder, last_read)
+    coords += read_from_latest(log_folder)
     return coords
 
 
@@ -208,16 +228,17 @@ def check_for_coords(log_folder: str | Path) -> list[CoordinateEntry]:
     if last_read.log_file != log_files[-1]:
         print("New log file(s) rolled over.")
         new_index = log_files.index(last_read.log_file) + 1
+
         for log_file in log_files[new_index:]:
             coords += read_from_saved(log_folder / log_file)
-        last_read.update(log_file=log_files[-1])
 
     # Scrape from latest.log.
-    coords += read_from_latest(log_folder, last_read)
+    coords += read_from_latest(log_folder)
+
     if coords:
+        print(LastRead.load())
         for coord in coords:
             print(coord)
-        print(last_read)
     return coords
 
 
