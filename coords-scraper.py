@@ -43,6 +43,28 @@ class CoordinateEntry:
     username: str = None
     dt: datetime = None
 
+    @classmethod
+    def from_message(cls, message: str):
+        res = re.search(r"(-?\d+)[, ;]+(-?\d+)[, ;]*(-?\d+)?", message)
+
+        if res is None:
+            return None
+
+        first, second, third = (int(i) if i else None for i in res.groups())
+        if third is None:
+            x, y, z = first, None, second
+        else:
+            x, y, z = first, second, third
+
+        start, end = res.span()
+        if start == 0:
+            comment = message[end:]
+        else:
+            comment = message[:start]
+        comment = comment.strip()
+
+        return cls(x, y, z, comment)
+
 
 @dataclass
 class PlayerMessage:
@@ -50,57 +72,34 @@ class PlayerMessage:
     username: str
     content: str
 
-
-def parse_coordinates(message: str):
-    res = re.search(r"(-?\d+)[, ;]+(-?\d+)[, ;]*(-?\d+)?", message)
-
-    if res is None:
+    @classmethod
+    def from_log_entry(cls, log_entry: str):
+        res = re.match(
+            r"\[(?P<time>\d\d:\d\d:\d\d)\] \[.+INFO\]: <(?P<username>.+)> (?P<content>.+)",
+            log_entry,
+        )
+        if res:
+            d = res.groupdict()
+            return cls(
+                time=time.fromisoformat(d["time"]),
+                username=d["username"],
+                content=d["content"],
+            )
         return None
 
-    first, second, third = (int(i) if i else None for i in res.groups())
-    if third is None:
-        x, y, z = first, None, second
-    else:
-        x, y, z = first, second, third
 
-    start, end = res.span()
-    if start == 0:
-        comment = message[end:]
-    else:
-        comment = message[:start]
-    comment = comment.strip()
-
-    return CoordinateEntry(x, y, z, comment)
-
-
-def parse_log_entry(raw_entry: str) -> PlayerMessage | None:
-    """Parse given log entry and return a `PlayerMessage` object. Returns `None` if not a player message."""
-    res = re.match(
-        r"\[(?P<time>\d\d:\d\d:\d\d)\] \[.+INFO\]: <(?P<username>.+)> (?P<content>.+)",
-        raw_entry,
-    )
-    if res:
-        d = res.groupdict()
-        return PlayerMessage(
-            time=time.fromisoformat(d["time"]),
-            username=d["username"],
-            content=d["content"],
-        )
-    return None
-
-
-def parse_log_entries(entries: list[str], log_date: date):
+def get_coordinates(entries: list[str], log_date: date):
     """Parse log entries."""
     for line in entries:
-        player_message = parse_log_entry(line)
+        player_message = PlayerMessage.from_log_entry(line)
         if player_message:
-            coords = parse_coordinates(player_message.content)
-            if coords:
+            coord = CoordinateEntry.from_message(player_message.content)
+            if coord:
                 entry_dt = datetime.combine(log_date, player_message.time)
-                coords.dt = entry_dt
-                coords.username = player_message.username
+                coord.dt = entry_dt
+                coord.username = player_message.username
                 print(player_message)
-                print(coords)
+                print(coord)
 
 
 def read_from_logfile(log_file: Path):
@@ -108,7 +107,7 @@ def read_from_logfile(log_file: Path):
     with gzip.open(log_file, "r") as f:
         # Boldly assume log file name is in the format: YYYY-MM-DD-n.log.gz
         log_date = date(*(int(i) for i in log_file.name.split("-")[:3]))
-        parse_log_entries(f.read().decode().splitlines(), log_date)
+        get_coordinates(f.read().decode().splitlines(), log_date)
 
 
 def read_from_latest(log_folder: Path, last_read: LastRead):
@@ -117,7 +116,7 @@ def read_from_latest(log_folder: Path, last_read: LastRead):
         log_entries = f.read().splitlines()
         from_line = last_read.line_number + 1
 
-        parse_log_entries(log_entries[from_line:], date.today())
+        get_coordinates(log_entries[from_line:], date.today())
         last_read.update(line_number=len(log_entries))
 
 
