@@ -36,9 +36,9 @@ class LastRead:
 
 @dataclass
 class CoordinateEntry:
-    x: int | None
+    x: int
     y: int | None
-    z: int | None
+    z: int
     comment: str | None
     username: str = None
     dt: datetime = None
@@ -94,14 +94,17 @@ def get_coordinates(log_entries: list[str], log_date: date) -> list[CoordinateEn
     """Parse log entries."""
     for line in log_entries:
         player_message = PlayerMessage.from_log_entry(line)
-        if player_message:
-            coord = CoordinateEntry.from_message(player_message.content)
-            if coord:
-                entry_dt = datetime.combine(log_date, player_message.time)
-                coord.dt = entry_dt
-                coord.username = player_message.username
-                print(player_message)
-                print(coord)
+        if not player_message:
+            continue
+
+        coord = CoordinateEntry.from_message(player_message.content)
+        if not coord:
+            continue
+
+        coord.dt = datetime.combine(log_date, player_message.time)
+        coord.username = player_message.username
+        # print(player_message)
+        print(coord)
 
 
 def read_from_logfile(log_file: Path):
