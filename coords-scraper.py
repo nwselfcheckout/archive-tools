@@ -3,7 +3,7 @@ import re
 import gzip
 import json
 from pathlib import Path
-from datetime import datetime
+from datetime import datetime, date, time
 from dataclasses import dataclass
 
 
@@ -40,6 +40,8 @@ class CoordinateEntry:
     y: int | None
     z: int | None
     comment: str
+    username: str = None
+    dt: datetime = None
 
 
 @dataclass
@@ -87,14 +89,17 @@ def parse_log_entry(raw_entry: str) -> PlayerMessage | None:
     return None
 
 
-def parse_log_entries(entries: list[str]):
+def parse_log_entries(entries: list[str], log_date: date):
     """Parse log entries."""
     for line in entries:
-        entry = parse_log_entry(line)
-        if entry:
-            coords = parse_coordinates(entry.content)
+        player_message = parse_log_entry(line)
+        if player_message:
+            coords = parse_coordinates(player_message.content)
             if coords:
-                print(entry.content)
+                entry_dt = datetime.combine(log_date, player_message.time)
+                coords.dt = entry_dt
+                coords.username = player_message.username
+                print(player_message)
                 print(coords)
 
 
@@ -102,8 +107,8 @@ def read_from_logfile(log_file: Path):
     """Read from a SAVED log file, ending with .log.gz."""
     with gzip.open(log_file, "r") as f:
         # Boldly assume log file name is in the format: YYYY-MM-DD-n.log.gz
-        dt = datetime(*(int(i) for i in log_file.name.split("-")[:3]))
-        parse_log_entries(f.read().decode().splitlines())
+        log_date = date(*(int(i) for i in log_file.name.split("-")[:3]))
+        parse_log_entries(f.read().decode().splitlines(), log_date)
 
 
 def read_from_latest(log_folder: Path, last_read: LastRead):
@@ -111,7 +116,8 @@ def read_from_latest(log_folder: Path, last_read: LastRead):
     with open(Path(log_folder).joinpath("latest.log"), "r") as f:
         log_entries = f.read().splitlines()
         from_line = last_read.line_number + 1
-        parse_log_entries(log_entries[from_line:])
+
+        parse_log_entries(log_entries[from_line:], date.today())
         last_read.update(line_number=len(log_entries))
 
 
@@ -156,10 +162,6 @@ def poll_logs(log_folder: str):
     log_files = sorted(f for f in os.listdir(log_folder) if f.endswith(".log.gz"))
     last_read = LastRead.load()
 
-    scrape_all(log_folder)
-    print(LastRead.load())
-    return
-
     # Nothing is read, this is the first run.
     if last_read is None:
         print("First run, scraping everything.")
@@ -182,5 +184,5 @@ def poll_logs(log_folder: str):
 
 
 if __name__ == "__main__":
-    # scrape_all("logs")
-    poll_logs("logs")
+    scrape_all("logs")
+    # poll_logs("logs")
