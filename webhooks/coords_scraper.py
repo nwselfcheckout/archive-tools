@@ -131,7 +131,6 @@ def get_coordinates(log_entries: list[str], log_date: date) -> list[CoordinateEn
             continue
         coord.dt = datetime.combine(log_date, player_message.time, timezone.utc)
         coord.username = player_message.username
-        print(coord)
         coords.append(coord)
     return coords
 
@@ -194,7 +193,10 @@ def check_logs(log_folder: str | Path) -> list[CoordinateEntry]:
 
     # Scrape from latest.log.
     coords += read_from_latest(log_folder, last_read)
-    print(last_read)
+    if coords:
+        for coord in coords:
+            print(coord)
+        print(last_read)
     return coords
 
 
