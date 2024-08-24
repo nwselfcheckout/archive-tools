@@ -10,10 +10,17 @@ Right now it has two functions:
 
 ## Setup
 
-### Discord webhook
+### Discord webhooks
 
 For each feature, go in to Channel Settings and access the Integration menu to
 create a webhook. Copy the webhook URL(s) and set the environment variables as follows.
+
+You should have separate channels and separate webhooks for each features.
+
+* Create a channel for the **server status** webhook. This channel should be read-only. The webhook will keep updating
+  the same message.
+* Create a channel for the **coordinates** webhook. The webhook will continue to send separate messages when coordinates
+  are found in the chat.
 
 ### Environment variables
 
