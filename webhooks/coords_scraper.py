@@ -58,9 +58,9 @@ class LastRead:
 
 @dataclass
 class CoordinateEntry:
-    x: int
-    y: int | None
-    z: int
+    x: float
+    y: float | None
+    z: float
     comment: str | None
     username: str = None
     dt: datetime = None
@@ -73,12 +73,14 @@ class CoordinateEntry:
         As loosely as possible, tries to look for a pair or triplet of numbers
         separated by commas, space, or semicolons. Returns `None` if not found.
         """
-        res = re.search(r"(-?\d+)[, ;]+(-?\d+)[, ;]*(-?\d+)?", message)
+        res = re.search(
+            r"(-?\d+(?:\.\d+)?)[, ;]+(-?\d+(?:\.\d+)?)[, ;]*(-?\d+(?:\.\d+)?)?", message
+        )
 
         if res is None:
             return None
 
-        first, second, third = (int(i) if i else None for i in res.groups())
+        first, second, third = (float(i) if i else None for i in res.groups())
         if third is None:
             x, y, z = first, None, second  # no Y-coordinate
         else:
@@ -98,15 +100,14 @@ class CoordinateEntry:
         """Format as a Discord embed to send."""
         embed = Embed()
         embed.title = self.comment[:256] if self.comment else "*No label*"
-        embed.add_field(
-            name="X", value=f"```{'-' if self.x is None else self.x}```", inline=True
-        )
-        embed.add_field(
-            name="Y", value=f"```{'-' if self.y is None else self.y}```", inline=True
-        )
-        embed.add_field(
-            name="Z", value=f"```{'-' if self.z is None else self.z}```", inline=True
-        )
+
+        for axis in "x", "y", "z":
+            if (value := getattr(self, axis)) is None:
+                value = "-"
+            else:
+                value = f"{value:.9g}"
+            embed.add_field(name=axis.upper(), value=f"```{value}```", inline=True)
+
         embed.set_footer(
             text=self.username, icon_url=f"https://mc-heads.net/avatar/{self.username}"
         )
