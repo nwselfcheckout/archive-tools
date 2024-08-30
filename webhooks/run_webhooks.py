@@ -46,7 +46,10 @@ if __name__ == "__main__":
     print(f"Polling interval: {POLLING_INTERVAL}")
 
     while True:
-        send_coords(sys.argv[1])
-        update_server_status(STATUS_MESSAGE_ID)
+        try:
+            send_coords(sys.argv[1])
+            update_server_status(STATUS_MESSAGE_ID)
 
-        time.sleep(POLLING_INTERVAL)
+            time.sleep(POLLING_INTERVAL)
+        except Exception as e:
+            print(f"Something went wrong: {e}")
